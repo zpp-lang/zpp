@@ -16,6 +16,13 @@ pub fn merge_span(span1: &Span, span2: &Span) -> Span {
     )
 }
 
+pub fn create_span(log: logos::Span) -> Span {
+    Span::new(
+        ByteIndex::from(log.start as u32),
+        ByteIndex::from(log.end as u32)
+    )
+}
+
 impl<'a> Reporting<'a> {
     /// Constructs a new Reporting instance with the given file.
     ///

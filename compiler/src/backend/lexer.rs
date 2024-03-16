@@ -1,8 +1,7 @@
 use std::process::exit;
 use codespan::{ByteIndex, Span};
 use logos::Logos;
-use common::errors::Reporting;
-use crate::create_span;
+use common::errors::{create_span, Reporting};
 
 #[derive(Logos, Debug, PartialEq)]
 #[logos(skip r"\s+")]
