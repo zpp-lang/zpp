@@ -1,6 +1,5 @@
 use std::process::exit;
 use codespan::{ByteIndex, Span};
-use codespan_reporting::files::SimpleFile;
 use logos::Logos;
 use common::errors::Reporting;
 use crate::create_span;
@@ -94,7 +93,6 @@ pub struct Token {
 }
 
 pub struct Lexer<'a> {
-    file: SimpleFile<&'a str, &'a str>,
     input: &'a str,
     reporter: Reporting<'a>
 }
@@ -102,7 +100,6 @@ pub struct Lexer<'a> {
 impl<'a> Lexer<'a> {
     pub fn new(name: &'a str, input: &'a str) -> Self {
         Lexer {
-            file: SimpleFile::new(name, input),
             input,
             reporter: Reporting::new(name, input)
         }
@@ -122,7 +119,7 @@ impl<'a> Lexer<'a> {
                             ByteIndex::from(lexer.span().end as u32), // ending character position
                         )
                     });
-                } else if let Err(err) = res {
+                } else if let Err(_) = res {
                     errors.push(self.reporter.emit_error(
                         "An error occurred while lexing".to_string(),
                         create_span(lexer.span()),

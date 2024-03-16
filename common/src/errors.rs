@@ -1,4 +1,4 @@
-use codespan::Span;
+use codespan::{ByteIndex, Span};
 use codespan_reporting::diagnostic::{Diagnostic, Label, LabelStyle, Severity};
 use codespan_reporting::files::SimpleFile;
 use codespan_reporting::term::{Config, emit};
@@ -7,6 +7,13 @@ use codespan_reporting::term::termcolor::{ColorChoice, StandardStream};
 /// A helper for generating and emitting diagnostics for error reporting.
 pub struct Reporting<'a> {
     file: SimpleFile<&'a str, &'a str>
+}
+
+pub fn merge_span(span1: &Span, span2: &Span) -> Span {
+    Span::new(
+        ByteIndex::from(span1.start().0),
+        ByteIndex::from(span2.end().0)
+    )
 }
 
 impl<'a> Reporting<'a> {

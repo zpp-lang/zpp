@@ -4,6 +4,7 @@ use codespan::Span;
 #[derive(Debug, PartialEq)]
 pub enum Type {
     Reference,
+    Void,
     String,
     Int,
     Float,

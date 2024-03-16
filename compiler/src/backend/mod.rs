@@ -6,7 +6,9 @@ mod tests {
 
     #[test]
     pub fn test_backend() {
-        let mut parser = Parser::new("test.rs", "func T() { printLn(\"Hello, world!\") }");
+        let mut parser = Parser::new("test.rs", "func MyTestFunction() { \nprintLn(\"Hello, world!\") \n}");
         let ast = parser.parse();
+
+        println!("{:?}", ast)
     }
 }
