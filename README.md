@@ -55,7 +55,8 @@ compile and execute a file.
 
 ## Contributing
 Thank you for considering making a contribution to Z++! Contributions are welcome and strongly
-encouraged, whether it's through code, documentation, bug reports, or any other form of help.
+encouraged, whether it's through code, documentation, bug reports, or any other form of help. If you have
+a new feature to contribute, you should instead make a pull request to our [RFCs](rfcs) subproject.
 
 ### How to contribute
 1. Ensure you have `rustup`, the Rust Toolchain, and LLVM installed on your system.
