@@ -1,9 +1,9 @@
+use std::process::exit;
 use codespan::{ByteIndex, Span};
-use codespan_reporting::diagnostic::{Diagnostic, Label, LabelStyle};
 use codespan_reporting::files::SimpleFile;
-use codespan_reporting::term::{Config, emit};
-use codespan_reporting::term::termcolor::{ColorChoice, StandardStream};
 use logos::Logos;
+use common::errors::Reporting;
+use crate::create_span;
 
 #[derive(Logos, Debug, PartialEq)]
 #[logos(skip r"[ \t\n]+")]
@@ -89,20 +89,22 @@ pub enum TokenType {
 
 #[derive(Debug)]
 pub struct Token {
-    token_type: TokenType,
-    span: Span,
+    pub token_type: TokenType,
+    pub span: Span,
 }
 
 pub struct Lexer<'a> {
     file: SimpleFile<&'a str, &'a str>,
     input: &'a str,
+    reporter: Reporting<'a>
 }
 
 impl<'a> Lexer<'a> {
     pub fn new(name: &'a str, input: &'a str) -> Self {
         Lexer {
             file: SimpleFile::new(name, input),
-            input
+            input,
+            reporter: Reporting::new(name, input)
         }
     }
     pub fn tokenize(&self) -> Vec<Token> {
@@ -121,20 +123,14 @@ impl<'a> Lexer<'a> {
                         )
                     });
                 } else if let Err(err) = res {
-                    errors.push(Diagnostic::error()
-                        .with_labels(vec![
-                            Label::new(
-                                LabelStyle::Primary,
-                                (),
-                                lexer.span().start..lexer.span().end
-                            ).with_message("Invalid token")
-                        ])
-                        .with_message("An error occurred while lexing".to_string())
-                        .with_code("001")
-                        .with_notes(vec![
+                    errors.push(self.reporter.emit_error(
+                        "An error occurred while lexing".to_string(),
+                        create_span(lexer.span()),
+                        vec![
                             "You might be running an outdated version of the compiler!".to_string()
-                        ])
-                    )
+                        ],
+                        "E001".to_string()
+                    ))
                 }
             } else {
                 break
@@ -142,12 +138,7 @@ impl<'a> Lexer<'a> {
         }
 
         if errors.len() > 0 {
-            for error in errors {
-                let writer = StandardStream::stderr(ColorChoice::Auto);
-                let config = Config::default();
-                emit(&mut writer.lock(), &config, &self.file, &error)
-                    .expect("Unknown error");
-            }
+            exit(1)
         }
 
         tokens

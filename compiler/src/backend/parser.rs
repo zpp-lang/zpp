@@ -1,104 +1,15 @@
-use std::collections::HashMap;
-use codespan::Span;
-use crate::backend::lexer::Token;
-
-#[derive(Debug, PartialEq)]
-pub enum Type {
-    Reference,
-    String,
-    Int,
-    Float,
-    Boolean,
-    Null,
-}
-
-#[derive(Debug, PartialEq)]
-pub enum TypedValue {
-    IdentVal(String),
-    StringVal(String),
-    IntVal(i64),
-    FloatVal(f64),
-    BoolVal(bool),
-    NullVal,
-}
-
-/// Represents a node in the abstract syntax tree (AST). Each node is given a unique
-/// span that represents the starting position and ending position of the evaluated
-/// expression.
-///
-/// The code generator (frontend) will implement a function called 'codegen' for
-/// each node, which will emit an AST node as LLVM IR.
-#[derive(Debug, PartialEq)]
-pub enum AstNode<'a> {
-    /// AST node type that represents an empty evaluation
-    Empty,
-    /// AST node type that represents a Z++ document
-    Document {
-        /// This is used to keep track of the entire expression, for emitting warnings,
-        /// errors, and other useful information.
-        span: Span,
-        file_name: &'a str, // The name of the file
-        body: Box<AstNode<'a>> // Typically a 'Block' ast node
-    },
-    /// AST node type that represents a collection of other AST Nodes
-    Block {
-        /// This is used to keep track of the entire expression, for emitting warnings,
-        /// errors, and other useful information.
-        span: Span,
-        /// Usually consists of expressions or assignments, however when the Block belongs to a
-        /// Document, it can contain functions as well.
-        body: Vec<AstNode<'a>>
-    },
-    /// AST node type that represents an identifier or reference
-    Identifier {
-        /// This is used to keep track of the entire expression, for emitting warnings,
-        /// errors, and other useful information.
-        span: Span,
-        /// This is the name of the reference or type identifier.
-        name: String,
-    },
-    /// AST node type that represents a basic function call
-    FunctionCall {
-        /// This is used to keep track of the entire expression, for emitting warnings,
-        /// errors, and other useful information.
-        span: Span,
-        name: String,
-        param_list: Vec<TypedValue>,
-    },
-    /// AST node type representing a function prototype
-    FuncDeclaration {
-        /// This is used to keep track of the entire expression, for emitting warnings,
-        /// errors, and other useful information.
-        span: Span,
-        name: String,
-        params: HashMap<String, Type>,
-        returns: Type,
-        body: Box<AstNode<'a>>,
-    },
-    /// AST node type representing a variable declaration
-    VarDeclaration {
-        /// This is used to keep track of the entire expression, for emitting warnings,
-        /// errors, and other useful information.
-        span: Span,
-        name: String,
-        is_mutable: bool, // TODO add compiler support for mutability
-        is_static: bool,
-        value: TypedValue,
-    },
-    /// AST node type representing a variable assignment
-    VarAssignment {
-        /// This is used to keep track of the entire expression, for emitting warnings,
-        /// errors, and other useful information.
-        span: Span,
-        name: String,
-        new_value: TypedValue // type will get checked upon evaluation
-    },
-}
+use codespan::{Span};
+use codespan_reporting::files::SimpleFile;
+use common::errors::Reporting;
+use crate::backend::lexer::{Lexer, Token};
+use common::ast::{AstNode, TypedValue, Type};
 
 /// Parses tokens into an abstract syntax tree (AST)
 pub struct Parser<'a> {
+    file: SimpleFile<&'a str, &'a str>,
     file_name: &'a str,
-    tokens: Vec<Token>
+    tokens: Vec<Token>,
+    reporter: Reporting<'a>,
 }
 
 impl<'a> Parser<'a> {
@@ -108,18 +19,47 @@ impl<'a> Parser<'a> {
     ///
     /// * `file_name` - The name of the file being parsed.
     /// * `tokens` - The tokens to parse into an AST.
-    pub fn new(file_name: &'a str, tokens: Vec<Token>) -> Self {
+    pub fn new(file_name: &'a str, contents: &'a str) -> Self {
+        let mut lexer = Lexer::new(file_name, contents);
+        let mut tokens = lexer.tokenize();
+
         Parser {
+            file: SimpleFile::new(file_name, contents),
             file_name,
-            tokens
+            tokens,
+            reporter: Reporting::new(file_name, contents)
         }
     }
 
     pub fn parse(&mut self) -> AstNode {
+        let mut iter = self.tokens.iter().peekable();
+        let mut ast = Vec::new();
+
+        while let Some(token) = iter.next() {
+            match &token.token_type {
+                // case for when the token is unknown to the parser, but known to the lexer
+                _ => {
+                    self.reporter.emit_warning(
+                        format!("Unrecognized token {:?}", token.token_type),
+                        token.span,
+                        vec![
+                            "If you are using a development version of the compiler, you may dismiss this warning. If not, file a bug report!".to_string()
+                        ],
+                        "PAR1".to_string(),
+                    );
+                }
+            }
+        }
+
         AstNode::Document {
-            span: Default::default(),
             file_name: self.file_name,
-            body: Box::new(AstNode::Empty)
+            body: Box::new(AstNode::Block {
+                span: Span::new(
+                    (&self.tokens).first().unwrap().span.start(),
+                    (&self.tokens).last().unwrap().span.end(),
+                ),
+                body: ast,
+            })
         }
     }
 
@@ -133,7 +73,7 @@ impl<'a> Parser<'a> {
     /// # Returns
     ///
     /// Returns true if reassignment is allowed, false otherwise.
-    fn check_allow_reassignment(&self, declaring_node: AstNode<'a>, assigning_node: AstNode<'a>) -> bool {
+    fn check_allow_reassignment(&self, declaring_node: &AstNode<'a>, assigning_node: &AstNode<'a>) -> bool {
         return match (declaring_node, assigning_node) {
             (AstNode::VarDeclaration { is_mutable, value, .. },
                 AstNode::VarAssignment { new_value, .. }) => {
@@ -164,7 +104,7 @@ impl<'a> Parser<'a> {
     /// # Returns
     ///
     /// Returns the type of the value.
-    fn get_type_for(&self, value: TypedValue) -> Type {
+    fn get_type_for(&self, value: &TypedValue) -> Type {
         return match value {
             TypedValue::IdentVal(_) => Type::Reference,
             TypedValue::StringVal(_) => Type::String,
