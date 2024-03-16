@@ -6,3 +6,7 @@ edition = "2021"
 [dependencies]
 clap = "4.5.2"
 compiler = { path = "../compiler" }
+
+[[bin]]
+name = "zxx"
+path = "src/main.rs"

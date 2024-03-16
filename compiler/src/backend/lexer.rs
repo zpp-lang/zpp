@@ -5,7 +5,7 @@ use common::errors::Reporting;
 use crate::create_span;
 
 #[derive(Logos, Debug, PartialEq)]
-#[logos(skip r"[ \t\n]+")]
+#[logos(skip r"\s+")]
 pub enum TokenType {
     // Keywords
     #[token("func")]
