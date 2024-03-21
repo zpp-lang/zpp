@@ -2,6 +2,7 @@ use std::fs::File;
 use clap::Arg;
 use std::io::Read;
 use std::path::Path;
+use compiler::backend::lexer::Lexer;
 use compiler::backend::parser::Parser;
 
 fn read_file(path: &str) -> String {
@@ -28,7 +29,9 @@ fn main() {
         .expect("No file argument provided");
 
     let contents = read_file(name);
-    let mut parser = Parser::new(name, &contents);
+    let lexer = Lexer::new(name, &contents);
+    let tokens = lexer.tokenize();
+    let mut parser = Parser::new(tokens);
 
-    parser.parse();
+    let ast = parser.parse();
 }

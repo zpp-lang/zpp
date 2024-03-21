@@ -5,6 +5,7 @@ use codespan_reporting::term::{Config, emit};
 use codespan_reporting::term::termcolor::{ColorChoice, StandardStream};
 
 /// A helper for generating and emitting diagnostics for error reporting.
+#[derive(Clone)]
 pub struct Reporting<'a> {
     file: SimpleFile<&'a str, &'a str>
 }

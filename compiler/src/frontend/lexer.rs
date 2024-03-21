@@ -3,7 +3,7 @@ use codespan::{ByteIndex, Span};
 use logos::Logos;
 use common::errors::{create_span, Reporting};
 
-#[derive(Logos, Debug, PartialEq)]
+#[derive(Logos, Debug, PartialEq, Clone)]
 #[logos(skip r"\s+")]
 pub enum TokenType {
     // Keywords
@@ -85,7 +85,7 @@ pub enum TokenType {
     At,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Token {
     pub token_type: TokenType,
     pub span: Span,
