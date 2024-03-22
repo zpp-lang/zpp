@@ -21,8 +21,8 @@ pub enum TokenType {
     While,
 
     // Literals
-    #[regex("[0-9]+(\\.[0-9]+)?", |lex| lex.slice().parse::<f64>().expect("Unknown error"))]
-    IntLiteral(f64),
+    #[regex("[0-9]+(\\.[0-9]+)?", |lex| lex.slice().parse::<f32>().expect("Unknown error"))]
+    IntLiteral(f32),
     #[regex("true|false", |lex| lex.slice() == "true")]
     BoolLiteral(bool),
     #[regex(r#""[^"\\\r\n]*""#, |lex| lex.slice()[1..lex.slice().len()-1].to_string())]
@@ -123,7 +123,7 @@ impl<'a> Lexer<'a> {
                         "An error occurred while lexing".to_string(),
                         create_span(lexer.span()),
                         vec![
-                            "You might be running an outdated version of the compiler!".to_string()
+                            "You might be running an outdated version of the interpreter!".to_string()
                         ],
                         "E001".to_string()
                     ))

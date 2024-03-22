@@ -2,8 +2,8 @@ use std::fs::File;
 use clap::Arg;
 use std::io::Read;
 use std::path::Path;
-use compiler::backend::lexer::Lexer;
-use compiler::backend::parser::Parser;
+use ast::lexer::Lexer;
+use ast::parser::Parser;
 
 fn read_file(path: &str) -> String {
     let path = Path::new(path);

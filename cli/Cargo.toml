@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 clap = "4.5.2"
-compiler = { path = "../compiler" }
+ast = { path = "../ast" }
 
 [[bin]]
 name = "zxx"

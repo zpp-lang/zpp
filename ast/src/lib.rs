@@ -1,3 +1,6 @@
+pub mod lexer;
+pub mod parser;
+
 use std::collections::HashMap;
 
 #[derive(Debug, PartialEq)]
@@ -15,8 +18,8 @@ pub enum Type {
 pub enum TypedValue {
     ReferenceVal(String),
     StringVal(String),
-    IntVal(i64),
-    FloatVal(f64),
+    IntVal(i32),
+    FloatVal(f32),
     BoolVal(bool),
     NullVal,
 }
@@ -24,9 +27,6 @@ pub enum TypedValue {
 /// Represents a node in the abstract syntax tree (AST). Each node is given a unique
 /// span that represents the starting position and ending position of the evaluated
 /// expression.
-///
-/// The code generator (frontend) will implement a function called 'codegen' for
-/// each node, which will emit an AST node as LLVM IR.
 #[derive(Debug, PartialEq)]
 pub enum AstNode {
     /// AST node type that represents an empty evaluation
@@ -61,7 +61,7 @@ pub enum AstNode {
     /// AST node type representing a variable declaration
     VarDeclaration {
         name: String,
-        is_mutable: bool, // TODO add compiler support for mutability
+        is_mutable: bool, // TODO add interpreter support for mutability
         is_static: bool,
         value: TypedValue,
     },
